@@ -1,4 +1,4 @@
-/* A-share rotation dashboard — 缩量筑底轮动 */
+/* A-share rotation dashboard — vanilla JS, no CDN chart lib */
 (function () {
   "use strict";
 
@@ -44,14 +44,7 @@
     },
   ];
 
-  const state = {
-    metrics: null,
-    equity: [],
-    trades: [],
-    holdings: [],
-    chart: null,
-  };
-
+  const state = { metrics: null, equity: [], trades: [], holdings: [] };
   const $ = (sel) => document.querySelector(sel);
 
   function fmtNum(n, digits) {
@@ -109,82 +102,123 @@
     ];
     $("#snapshot-dl").innerHTML = rows
       .map(
-        (pair) =>
+        (r) =>
           '<div class="row"><dt>' +
-          pair[0] +
+          r[0] +
           "</dt><dd>" +
-          pair[1] +
+          r[1] +
           "</dd></div>"
       )
       .join("");
   }
 
-  function renderChart(equity) {
-    const labels = equity.map((d) => d.date);
-    const navs = equity.map((d) => d.nav);
-    const last = equity[equity.length - 1];
-    $("#nav-last").textContent = last
-      ? "最新 " + last.date + " · " + fmtNum(last.nav, 2)
-      : "NAV —";
-
+  function drawEquityChart(equity) {
     const canvas = $("#equity-chart");
-    if (!canvas || typeof Chart === "undefined") return;
+    if (!canvas || !equity.length) return;
+    const parent = canvas.parentElement;
+    const dpr = window.devicePixelRatio || 1;
+    const cssW = parent.clientWidth || 640;
+    const cssH = parent.clientHeight || 320;
+    canvas.width = Math.floor(cssW * dpr);
+    canvas.height = Math.floor(cssH * dpr);
+    canvas.style.width = cssW + "px";
+    canvas.style.height = cssH + "px";
     const ctx = canvas.getContext("2d");
-    if (state.chart) state.chart.destroy();
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    const grad = ctx.createLinearGradient(0, 0, 0, 280);
+    const pad = { t: 16, r: 16, b: 36, l: 54 };
+    const w = cssW - pad.l - pad.r;
+    const h = cssH - pad.t - pad.b;
+    const navs = equity.map((d) => d.nav);
+    let min = Math.min.apply(null, navs);
+    let max = Math.max.apply(null, navs);
+    const span = max - min || 1;
+    min -= span * 0.05;
+    max += span * 0.05;
+
+    const xAt = (i) => pad.l + (w * i) / Math.max(equity.length - 1, 1);
+    const yAt = (v) => pad.t + h * (1 - (v - min) / (max - min));
+
+    ctx.clearRect(0, 0, cssW, cssH);
+
+    // grid
+    ctx.strokeStyle = "rgba(255,255,255,0.05)";
+    ctx.lineWidth = 1;
+    ctx.fillStyle = "#64748b";
+    ctx.font = "11px JetBrains Mono, monospace";
+    const ticks = 5;
+    for (let i = 0; i <= ticks; i++) {
+      const v = min + ((max - min) * i) / ticks;
+      const y = yAt(v);
+      ctx.beginPath();
+      ctx.moveTo(pad.l, y);
+      ctx.lineTo(pad.l + w, y);
+      ctx.stroke();
+      const label = (v / 10000).toFixed(0) + "万";
+      ctx.fillText(label, 8, y + 3);
+    }
+
+    // x labels
+    const xTicks = Math.min(6, equity.length);
+    for (let i = 0; i < xTicks; i++) {
+      const idx = Math.round(((equity.length - 1) * i) / Math.max(xTicks - 1, 1));
+      const x = xAt(idx);
+      const label = equity[idx].date.slice(2);
+      ctx.fillStyle = "#64748b";
+      ctx.fillText(label, x - 28, cssH - 12);
+    }
+
+    // area + line
+    const grad = ctx.createLinearGradient(0, pad.t, 0, pad.t + h);
     grad.addColorStop(0, "rgba(61,156,240,0.35)");
     grad.addColorStop(1, "rgba(61,156,240,0.00)");
-
-    state.chart = new Chart(ctx, {
-      type: "line",
-      data: {
-        labels: labels,
-        datasets: [
-          {
-            label: "NAV",
-            data: navs,
-            borderColor: "#3d9cf0",
-            backgroundColor: grad,
-            borderWidth: 2,
-            pointRadius: 0,
-            pointHoverRadius: 4,
-            fill: true,
-            tension: 0.15,
-          },
-        ],
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: { mode: "index", intersect: false },
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: function (c) {
-                return " NAV  " + fmtNum(c.parsed.y, 2);
-              },
-            },
-          },
-        },
-        scales: {
-          x: {
-            ticks: { color: "#64748b", maxTicksLimit: 8, maxRotation: 0 },
-            grid: { color: "rgba(255,255,255,0.04)" },
-          },
-          y: {
-            ticks: {
-              color: "#64748b",
-              callback: function (v) {
-                return (v / 10000).toFixed(0) + "万";
-              },
-            },
-            grid: { color: "rgba(255,255,255,0.05)" },
-          },
-        },
-      },
+    ctx.beginPath();
+    equity.forEach((d, i) => {
+      const x = xAt(i);
+      const y = yAt(d.nav);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
     });
+    ctx.strokeStyle = "#3d9cf0";
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.lineTo(xAt(equity.length - 1), pad.t + h);
+    ctx.lineTo(xAt(0), pad.t + h);
+    ctx.closePath();
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    const last = equity[equity.length - 1];
+    $("#nav-last").textContent =
+      "最新 " + last.date + " · " + fmtNum(last.nav, 2);
+
+    // hover
+    if (!canvas._bound) {
+      canvas._bound = true;
+      const tip = document.createElement("div");
+      tip.style.cssText =
+        "position:absolute;pointer-events:none;display:none;background:#0c1220;border:1px solid rgba(255,255,255,.1);color:#e2e8f0;font:12px JetBrains Mono,monospace;padding:6px 8px;border-radius:6px;z-index:2;";
+      parent.style.position = "relative";
+      parent.appendChild(tip);
+      canvas.addEventListener("mousemove", (ev) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = ev.clientX - rect.left;
+        const ratio = (x - pad.l) / w;
+        const idx = Math.round(ratio * (state.equity.length - 1));
+        if (idx < 0 || idx >= state.equity.length) {
+          tip.style.display = "none";
+          return;
+        }
+        const d = state.equity[idx];
+        tip.style.display = "block";
+        tip.style.left = Math.min(rect.width - 140, Math.max(8, x + 10)) + "px";
+        tip.style.top = "12px";
+        tip.textContent = d.date + "  NAV " + fmtNum(d.nav, 2);
+      });
+      canvas.addEventListener("mouseleave", () => {
+        tip.style.display = "none";
+      });
+    }
   }
 
   function latestNonEmpty(holdings) {
@@ -197,41 +231,41 @@
   function renderLatestBanner(snap) {
     const el = $("#holdings-latest");
     if (!snap) {
-      el.innerHTML = "<p class=\"muted\">暂无持仓快照</p>";
+      el.innerHTML = '<p class="section-desc">暂无持仓快照</p>';
       return;
     }
     if (snap.n_pos === 0) {
       el.innerHTML =
-        "<div class=\"timeline-detail\"><strong>空仓</strong>" +
-        "<span class=\"muted\">最近快照 " +
+        '<div class="card-meta"><div><span class="section-kicker">LATEST</span>' +
+        '<p class="section-desc" style="margin-top:0.35rem">回测期末为空仓（现金） · 最近交易日快照 ' +
         snap.date +
-        " · n_pos = 0（现金）</span></div>";
+        '</p></div><span class="badge badge-reason">n_pos = 0</span></div>';
       return;
     }
     const chips = snap.positions
       .map(
         (p) =>
-          '<span class="pos-chip"><span class="code">' +
+          '<div class="pos-chip"><span class="code accent">' +
           p.code +
-          "</span><span class=\"muted\">" +
+          '</span><span class="sub">' +
           fmtNum(p.shares, 2) +
-          " 股</span><span class=\"muted\">成本 " +
+          " 股</span><span class=\"sub\">成本 " +
           fmtNum(p.avg_cost, 3) +
-          "</span></span>"
+          "</span></div>"
       )
       .join("");
     el.innerHTML =
-      '<div class="timeline-detail"><strong>最近非空持仓</strong>' +
-      "<span class=\"mono\">" +
+      '<div class="card-meta"><div><span class="section-kicker">CURRENT / LATEST</span>' +
+      '<p style="margin:0.35rem 0 0;color:#fff;font-size:0.9rem">最近非空持仓 · ' +
       snap.date +
-      "</span><span class=\"muted\">" +
+      " · " +
       snap.n_pos +
-      " 只</span></div><div>" +
+      ' 只</p></div></div><div class="chips">' +
       chips +
       "</div>";
   }
 
-  function filteredDateOptions() {
+  function filteredHoldings() {
     const code = ($("#holdings-code-filter").value || "").trim();
     const nonempty = $("#holdings-nonempty").checked;
     return state.holdings.filter((h) => {
@@ -241,88 +275,48 @@
     });
   }
 
-  function populateTimelineSelect(preferDate) {
-    const sel = $("#timeline-date");
-    const list = filteredDateOptions();
-    const prev = preferDate || sel.value;
-    sel.innerHTML = "";
-    if (!list.length) {
-      const opt = document.createElement("option");
-      opt.value = "";
-      opt.textContent = "无匹配日期";
-      sel.appendChild(opt);
-      return;
-    }
-    list
-      .slice()
-      .reverse()
-      .forEach((h) => {
-        const opt = document.createElement("option");
-        opt.value = h.date;
-        opt.textContent = h.date + " · " + h.n_pos + " 只";
-        sel.appendChild(opt);
-      });
-    if (prev && list.some((h) => h.date === prev)) {
-      sel.value = prev;
-    } else {
-      const latest = latestNonEmpty(list);
-      sel.value = latest ? latest.date : list[list.length - 1].date;
-    }
-  }
-
-  function renderTimelineDetail() {
-    const date = $("#timeline-date").value;
-    const snap = state.holdings.find((h) => h.date === date);
-    const detail = $("#timeline-detail");
-    const tbody = $("#timeline-tbody");
-    const empty = $("#timeline-empty");
-
-    if (!snap) {
-      detail.innerHTML = '<span class="muted">请选择日期</span>';
-      tbody.innerHTML = "";
-      empty.style.display = "none";
-      return;
-    }
-
-    detail.innerHTML =
-      "<strong>日期</strong> <span class=\"mono\">" +
-      snap.date +
-      "</span> · <span class=\"muted\">持仓 " +
-      snap.n_pos +
-      " 只</span>";
-
-    if (!snap.positions.length) {
-      tbody.innerHTML = "";
-      empty.style.display = "block";
-      return;
-    }
-    empty.style.display = "none";
-    tbody.innerHTML = snap.positions
-      .map(
-        (p) =>
-          "<tr><td class=\"mono\">" +
-          p.code +
-          '</td><td class="num">' +
-          fmtNum(p.shares, 2) +
-          '</td><td class="num">' +
-          fmtNum(p.avg_cost, 4) +
-          '</td><td class="num">' +
-          fmtNum(p.cost_basis, 2) +
-          "</td><td>" +
-          (p.side_last === "buy"
-            ? '<span class="pill buy">买入</span>'
-            : '<span class="pill sell">卖出</span>') +
-          "</td><td><span class=\"pill reason\">" +
-          reasonLabel(p.reason) +
-          "</span></td></tr>"
-      )
+  function renderHoldings() {
+    const latest = latestNonEmpty(state.holdings);
+    renderLatestBanner(latest);
+    const list = filteredHoldings().slice().reverse();
+    const latestDate = latest && latest.n_pos > 0 ? latest.date : null;
+    $("#holdings-list").innerHTML = list
+      .map((h) => {
+        const isLatest = latestDate && h.date === latestDate;
+        const chips =
+          h.n_pos === 0
+            ? '<span class="muted">空仓</span>'
+            : h.positions
+                .map(
+                  (p) =>
+                    '<div class="pos-chip"><span class="code">' +
+                    p.code +
+                    '</span><span class="sub">' +
+                    fmtNum(p.shares, 2) +
+                    " 股 · 均价 " +
+                    fmtNum(p.avg_cost, 3) +
+                    '</span><span class="tiny">' +
+                    p.side_last +
+                    " · " +
+                    reasonLabel(p.reason) +
+                    "</span></div>"
+                )
+                .join("");
+        return (
+          '<article class="card card-pad holdings-card' +
+          (isLatest ? " is-latest" : "") +
+          '"><div class="card-meta"><div><span class="mono">' +
+          h.date +
+          "</span>" +
+          (isLatest ? '<span class="badge badge-buy tag-latest">最新持仓</span>' : "") +
+          '</div><span class="muted">' +
+          h.n_pos +
+          ' 只持仓</span></div><div class="chips">' +
+          chips +
+          "</div></article>"
+        );
+      })
       .join("");
-  }
-
-  function renderHoldingsUI() {
-    renderLatestBanner(latestNonEmpty(state.holdings));
-    populateTimelineSelect();
-    renderTimelineDetail();
   }
 
   function filteredTrades() {
@@ -354,24 +348,24 @@
       .map((t) => {
         const sideBadge =
           t.side === "buy"
-            ? '<span class="pill buy">买入</span>'
-            : '<span class="pill sell">卖出</span>';
+            ? '<span class="badge badge-buy">买入</span>'
+            : '<span class="badge badge-sell">卖出</span>';
         return (
           "<tr><td class=\"mono\">" +
           t.date +
-          '</td><td class="mono">' +
+          '</td><td class="mono accent">' +
           t.code +
           "</td><td>" +
           sideBadge +
-          '</td><td class="num">' +
+          '</td><td class="right mono">' +
           fmtNum(t.price, 4) +
-          '</td><td class="num">' +
+          '</td><td class="right mono">' +
           fmtNum(t.shares, 2) +
-          '</td><td class="num">' +
+          '</td><td class="right mono">' +
           fmtNum(t.amount, 2) +
-          '</td><td class="num muted">' +
+          '</td><td class="right mono muted">' +
           fmtNum(t.cost, 2) +
-          "</td><td><span class=\"pill reason\">" +
+          '</td><td><span class="badge badge-reason">' +
           reasonLabel(t.reason) +
           "</span></td></tr>"
         );
@@ -384,17 +378,24 @@
   function renderStrategy() {
     $("#strategy-cards").innerHTML = STRATEGY_CARDS.map(
       (c) =>
-        '<article class="strategy-card"><h3>' +
+        '<article class="card card-pad"><h3>' +
         c.title +
         "</h3><ul>" +
-        c.body.map((b) => "<li><span>" + b + "</span></li>").join("") +
+        c.body
+          .map(
+            (b) =>
+              '<li><span class="bullet">▹</span><span>' + b + "</span></li>"
+          )
+          .join("") +
         "</ul></article>"
     ).join("");
   }
 
   function setupNav() {
-    const links = document.querySelectorAll("nav.tabs a");
-    const sections = Array.from(links).map((a) => $(a.getAttribute("href")));
+    const links = document.querySelectorAll(".nav-link");
+    const sections = Array.prototype.map.call(links, (a) =>
+      $(a.getAttribute("href"))
+    );
     function setActive() {
       let cur = sections[0];
       const y = window.scrollY + 120;
@@ -415,41 +416,40 @@
   function bindFilters() {
     ["holdings-code-filter", "holdings-nonempty"].forEach((id) => {
       const el = document.getElementById(id);
-      el.addEventListener("input", function () {
-        populateTimelineSelect();
-        renderTimelineDetail();
-      });
-      el.addEventListener("change", function () {
-        populateTimelineSelect();
-        renderTimelineDetail();
-      });
+      el.addEventListener("input", renderHoldings);
+      el.addEventListener("change", renderHoldings);
     });
-    $("#timeline-date").addEventListener("change", renderTimelineDetail);
     ["trade-code", "trade-side", "trade-reason"].forEach((id) => {
       const el = document.getElementById(id);
       el.addEventListener("input", renderTrades);
       el.addEventListener("change", renderTrades);
     });
+    window.addEventListener("resize", () => drawEquityChart(state.equity));
   }
 
   async function main() {
     try {
-      const pack = await Promise.all([
-        loadJSON("./data/metrics.json"),
-        loadJSON("./data/equity.json"),
-        loadJSON("./data/trades.json"),
-        loadJSON("./data/holdings_timeline.json"),
-      ]);
+      let pack;
+      if (window.ASR_DATA) {
+        const d = window.ASR_DATA;
+        pack = [d.metrics, d.equity, d.trades, d.holdings];
+      } else {
+        pack = await Promise.all([
+          loadJSON("data/metrics.json"),
+          loadJSON("data/equity.json"),
+          loadJSON("data/trades.json"),
+          loadJSON("data/holdings_timeline.json"),
+        ]);
+      }
       state.metrics = pack[0];
       state.equity = pack[1];
       state.trades = pack[2];
       state.holdings = pack[3];
-
       renderKPIs(state.metrics);
       renderSnapshot(state.metrics);
-      renderChart(state.equity);
+      drawEquityChart(state.equity);
       populateReasonFilter();
-      renderHoldingsUI();
+      renderHoldings();
       renderTrades();
       renderStrategy();
       bindFilters();
@@ -458,16 +458,12 @@
       console.error(err);
       document.body.insertAdjacentHTML(
         "afterbegin",
-        '<div class="error-banner">数据加载失败：请用本地静态服务器打开（或检查 data/*.json）。' +
+        '<div class="error-banner">数据加载失败：请用本地静态服务器打开（file:// 下 fetch 可能被拦）。' +
           err.message +
           "</div>"
       );
     }
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", main);
-  } else {
-    main();
-  }
+  main();
 })();

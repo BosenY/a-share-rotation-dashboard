@@ -207,6 +207,22 @@ def main() -> None:
     write_json(OUT / "holdings_timeline.json", holdings)
     write_json(OUT / "metrics.json", build_metrics(equity, trades))
 
+    # file:// friendly bundle for opening index.html without a server
+    bundle = {
+        "metrics": build_metrics(equity, trades),
+        "equity": build_equity_json(equity),
+        "trades": build_trades_json(trades),
+        "holdings": holdings,
+    }
+    assets = ROOT / "assets"
+    assets.mkdir(parents=True, exist_ok=True)
+    bundle_path = assets / "bundle_data.js"
+    bundle_path.write_text(
+        "window.ASR_DATA = " + json.dumps(bundle, ensure_ascii=False) + ";\n",
+        encoding="utf-8",
+    )
+    print(f"wrote {bundle_path} ({bundle_path.stat().st_size} bytes)")
+
     print(
         f"rows: trades={len(trades)}, equity={len(equity)}, "
         f"holdings_snapshots={len(holdings)}"
