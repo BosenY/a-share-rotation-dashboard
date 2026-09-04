@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="缩量筑底轮动策略 · 持仓时间线与操作记录回测看板" />
+  <title>缩量筑底轮动 · 持仓与操作</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config={theme:{extend:{colors:{ink:{950":"#070b12",900":"#0b1220"},accent:{DEFAULT:"#3d8bfd",dim:"#2563eb"}},fontFamily:{sans:["Noto Sans SC","sans-serif"],mono:["JetBrains Mono","monospace"]}}}}</script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="assets/style.css" />
+</head>
+<body class="bg-ink-950 text-slate-200 font-sans antialiased min-h-screen">
+  <div class="bg-grid fixed inset-0 pointer-events-none opacity-40"></div>
+
+  <header class="sticky top-0 z-40 border-b border-white/5 bg-ink-950/80 backdrop-blur-xl">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-accent to-accent-dim flex items-center justify-center shadow-lg shadow-accent/20">
+          <span class="text-white font-bold text-sm">轮</span>
+        </div>
+        <div>
+          <h1 class="text-base sm:text-lg font-semibold tracking-wide text-white">缩量筑底轮动 · 持仓与操作</h1>
+          <p class="text-xs text-slate-500 hidden sm:block">A-Share Rotation · Backtest Dashboard</p>
+        </div>
+      </div>
+      <nav class="flex flex-wrap gap-1 text-sm" id="nav">
+        <a href="#overview" class="nav-link active">总览</a>
+        <a href="#holdings" class="nav-link">持仓时间线</a>
+        <a href="#trades" class="nav-link">操作记录</a>
+        <a href="#strategy" class="nav-link">策略说明</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="relative max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-16">
+    <section id="overview" class="scroll-mt-24 space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+        <div>
+          <p class="section-kicker">Overview</p>
+          <h2 class="section-title">策略总览</h2>
+          <p id="one-liner" class="mt-2 text-slate-400 max-w-2xl text-sm sm:text-base leading-relaxed"></p>
+        </div>
+        <div id="period-badge" class="text-xs font-mono text-slate-500 bg-ink-800/80 border border-white/5 rounded-full px-3 py-1.5 self-start"></div>
+      </div>
+      <div id="kpi-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3"></div>
+      <div class="grid lg:grid-cols-3 gap-4">
+        <div class="card lg:col-span-2 p-4 sm:p-5">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-medium text-slate-300">净值曲线 <span class="text-slate-500 font-normal">NAV</span></h3>
+            <span class="text-xs text-slate-500 font-mono" id="nav-last"></span>
+          </div>
+          <div class="h-64 sm:h-80">
+            <canvas id="equity-chart"></canvas>
+          </div>
+        </div>
+        <div class="card p-4 sm:p-5 flex flex-col gap-4">
+          <h3 class="text-sm font-medium text-slate-300">回测快照</h3>
+          <dl id="snapshot-dl" class="space-y-3 text-sm flex-1"></dl>
+          <div class="rounded-lg overflow-hidden border border-white/5 bg-ink-900">
+            <img src="assets/equity_curve.png" alt="Equity curve" class="w-full opacity-90 hover:opacity-100 transition" loading="lazy" />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="holdings" class="scroll-mt-24 space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+        <div>
+          <p class="section-kicker">Holdings</p>
+          <h2 class="section-title">持仓时间线</h2>
+          <p class="mt-2 text-slate-400 text-sm">按调仓/交易日重建的仓位快照；高亮为最近一次非空持仓。</p>
+        </div>
+        <div class="flex flex-wrap gap-2 items-center">
+          <label class="text-xs text-slate-500">筛选代码</label>
+          <input id="holdings-code-filter" type="text" placeholder="如 000617" class="input-field w-28" />
+          <label class="inline-flex items-center gap-1.5 text-xs text-slate-400 cursor-pointer select-none">
+            <input id="holdings-nonempty" type="checkbox" class="accent-accent" checked />
+            仅看有持仓
+          </label>
+        </div>
+      </div>
+      <div id="holdings-latest" class="card p-4 border-accent/30 bg-gradient-to-r from-accent/10 to-transparent"></div>
+      <div class="card p-4 space-y-3">
+        <div class="flex flex-wrap gap-3 items-center">
+          <label class="text-xs text-slate-500">选择日期
+            <select id="timeline-date" class="input-field ml-2"></select>
+          </label>
+          <div id="timeline-detail" class="text-sm text-slate-400"></div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-ink-800/80 text-slate-400 text-xs">
+              <tr>
+                <th class="text-left px-4 py-3">代码</th>
+                <th class="text-left px-4 py-3">股数</th>
+                <th class="text-left px-4 py-3">成本均价</th>
+                <th class="text-left px-4 py-3">成本金额</th>
+                <th class="text-left px-4 py-3">方向</th>
+                <th class="text-left px-4 py-3">原因</th>
+              </tr>
+            </thead>
+            <tbody id="timeline-tbody" class="divide-y divide-white/5"></tbody>
+          </table>
+          <div id="timeline-empty" class="hidden px-4 py-6 text-sm text-slate-500">该日空仓</div>
+        </div>
+      </div>
+      <div id="holdings-list" class="space-y-3"></div>
+    </section>
+
+    <section id="trades" class="scroll-mt-24 space-y-6">
+      <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+        <div>
+          <p class="section-kicker">Trades</p>
+          <h2 class="section-title">操作记录</h2>
+          <p class="mt-2 text-slate-400 text-sm">完整买卖流水，可按代码 / 方向 / 原因筛选。</p>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <input id="trade-code" type="text" placeholder="代码" class="input-field w-24" />
+          <select id="trade-side" class="input-field">
+            <option value="">全部方向</option>
+            <option value="buy">买入</option>
+            <option value="sell">卖出</option>
+          </select>
+          <select id="trade-reason" class="input-field">
+            <option value="">全部原因</option>
+          </select>
+        </div>
+      </div>
+      <div class="card overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-ink-800/80 text-slate-400 text-xs uppercase tracking-wider">
+              <tr>
+                <th class="text-left px-4 py-3 font-medium">日期</th>
+                <th class="text-left px-4 py-3 font-medium">代码</th>
+                <th class="text-left px-4 py-3 font-medium">方向</th>
+                <th class="text-right px-4 py-3 font-medium">价格</th>
+                <th class="text-right px-4 py-3 font-medium">股数</th>
+                <th class="text-right px-4 py-3 font-medium">金额</th>
+                <th class="text-right px-4 py-3 font-medium">成本</th>
+                <th class="text-left px-4 py-3 font-medium">原因</th>
+              </tr>
+            </thead>
+            <tbody id="trades-tbody" class="divide-y divide-white/5"></tbody>
+          </table>
+        </div>
+        <div id="trades-count" class="px-4 py-2 text-xs text-slate-500 border-t border-white/5 bg-ink-900/50"></div>
+      </div>
+    </section>
+
+    <section id="strategy" class="scroll-mt-24 space-y-6">
+      <div>
+        <p class="section-kicker">Strategy</p>
+        <h2 class="section-title">策略说明</h2>
+      </div>
+      <div class="grid md:grid-cols-2 gap-4" id="strategy-cards"></div>
+    </section>
+  </main>
+
+  <footer class="relative border-t border-white/5 mt-16 py-8 text-center text-xs text-slate-600">
+    <p>研究用途回测展示 · 非投资建议 · 数据由本地 CSV 生成</p>
+    <p class="mt-1 font-mono">a_share_rotation / web</p>
+  </footer>
+
+  <script src="assets/app.js"></script>
+</body>
+</html>

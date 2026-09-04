@@ -1,0 +1,608 @@
+[
+  {
+    "date": "2023-07-31",
+    "positions": [
+      {
+        "code": "000617",
+        "shares": 42942.782661,
+        "avg_cost": 6.97697,
+        "cost_basis": 299610.51,
+        "side_last": "buy",
+        "reason": "rebalance"
+      }
+    ],
+    "n_pos": 1
+  },
+  {
+    "date": "2023-08-07",
+    "positions": [
+      {
+        "code": "000617",
+        "shares": 126938.35146,
+        "avg_cost": 7.076325,
+        "cost_basis": 898257.0,
+        "side_last": "buy",
+        "reason": "rebalance"
+      }
+    ],
+    "n_pos": 1
+  },
+  {
+    "date": "2023-08-14",
+    "positions": [
+      {
+        "code": "000617",
+        "shares": 127732.663792,
+        "avg_cost": 7.074089,
+        "cost_basis": 903592.17,
+        "side_last": "buy",
+        "reason": "rebalance"
+      }
+    ],
+    "n_pos": 1
+  },
+  {
+    "date": "2023-08-15",
+    "positions": [],
+    "n_pos": 0
+  },
+  {
+    "date": "2024-04-22",
+    "positions": [
+      {
+        "code": "000792",
+        "shares": 48927.183009,
+        "avg_cost": 17.42741,
+        "cost_basis": 852674.08,
+        "side_last": "buy",
+        "reason": "rebalance"
+      }
+    ],
+    "n_pos": 1
+  },
+  {
+    "date": "2024-04-26",
+    "positions": [],
+    "n_pos": 0
+  },
+  {
+    "date": "2024-08-12",
+    "positions": [
+      {
+        "code": "000002",
+        "shares": 37569.405226,
+        "avg_cost": 7.15715,
+        "cost_basis": 268889.87,
+        "side_last": "buy",
+        "reason": "rebalance"
+      }
+    ],
+    "n_pos": 1
+  },
+  {
+    "date": "2024-08-14",
+    "positions": [],
+    "n_pos": 0
+  },
+  {
+    "date": "2025-02-10",
+    "positions": [
+      {
+        "code": "000166",
+        "shares": 26459.143672,
+        "avg_cost": 4.99499,
+        "cost_basis": 132163.16,
+        "side_last": "buy",
+        "reason": "rebalance"
+      },
+      {
+        "code": "000617",
+        "shares": 20004.716201,
+        "avg_cost": 6.6066,
+        "cost_basis": 132163.16,
+        "side_last": "buy",
+        "reason": "rebalance"
+      }
+    ],
+    "n_pos": 2
+  },
+  {
+    "date": "2025-02-20",
+    "positions": [
+      {
+        "code": "000166",
+        "shares": 26459.143672,
+        "avg_cost": 4.99499,
+        "cost_basis": 132163.16,
+        "side_last": "buy",
+        "reason": "rebalance"
+      }
+    ],
+    "n_pos": 1
+  },
+  {
+    "date": "2025-02-24",
+    "positions": [
+      {
+        "code": "000166",
+        "shares": 52313.768881,
+        "avg_cost": 5.014779,
+        "cost_basis": 262341.97,
+        "side_last": "buy",
+        "reason": "rebalance"
+      }
+    ],
+    "n_pos": 1
+  },
+  {
+    "date": "2025-03-03",
+    "positions": [
+      {
+        "code": "000166",
+        "shares": 158824.895599,
+        "avg_cost": 4.967943,
+        "cost_basis": 789033.1,
+        "side_last": "buy",
+        "reason": "rebalance"
+      }
+    ],
+    "n_pos": 1
+  },
+  {
+    "date": "2025-03-04",
+    "positions": [],
+    "n_pos": 0
+  },
+  {
+    "date": "2025-06-09",
+    "positions": [
+      {
+        "code": "000792",
+        "shares": 47444.822902,
+        "avg_cost": 16.50649,
+        "cost_basis": 783147.49,
+        "side_last": "buy",
+        "reason": "rebalance"
+      }
+    ],
+    "n_pos": 1
+  },
+  {
+    "date": "2025-06-16",
+    "positions": [
+      {
+        "code": "000708",
+        "shares": 23925.373546,
+        "avg_cost": 10.97096,
+        "cost_basis": 262484.32,
+        "side_last": "buy",
+        "reason": "rebalance"
+      },
+      {
+        "code": "000792",
+        "shares": 15802.405627,
+        "avg_cost": 16.50649,
+        "cost_basis": 260842.25,
+        "side_last": "sell",
+        "reason": "rebalance"
+      },
+      {
+        "code": "000807",
+        "shares": 17741.684308,
+        "avg_cost": 14.79478,
+        "cost_basis": 262484.32,
+        "side_last": "buy",
+        "reason": "rebalance"
+      }
+    ],
+    "n_pos": 3
+  },
+  {
+    "date": "2025-06-30",
+    "positions": [
+      {
+        "code": "000708",
+        "shares": 18304.912316,
+        "avg_cost": 10.97096,
+        "cost_basis": 200822.46,
+        "side_last": "sell",
+        "reason": "rebalance"
+      },
+      {
+        "code": "000776",
+        "shares": 12350.378585,
+        "avg_cost": 16.3163,
+        "cost_basis": 201512.48,
+        "side_last": "buy",
+        "reason": "rebalance"
+      },
+      {
+        "code": "000792",
+        "shares": 11745.385855,
+        "avg_cost": 16.50649,
+        "cost_basis": 193875.09,
+        "side_last": "sell",
+        "reason": "rebalance"
+      },
+      {
+        "code": "000807",
+        "shares": 13042.841269,
+        "avg_cost": 14.79478,
+        "cost_basis": 192965.97,
+        "side_last": "sell",
+        "reason": "rebalance"
+      }
+    ],
+    "n_pos": 4
+  },
+  {
+    "date": "2025-07-07",
+    "positions": [
+      {
+        "code": "000708",
+        "shares": 17403.685409,
+        "avg_cost": 10.97096,
+        "cost_basis": 190935.14,
+        "side_last": "sell",
+        "reason": "rebalance"
+      },
+      {
+        "code": "000776",
+        "shares": 12350.378585,
+        "avg_cost": 16.3163,
+        "cost_basis": 201512.48,
+        "side_last": "buy",
+        "reason": "rebalance"
+      },
+      {
+        "code": "000792",
+        "shares": 11745.385855,
+        "avg_cost": 16.50649,
+        "cost_basis": 193875.09,
+        "side_last": "sell",
+        "reason": "rebalance"
+      },
+      {
+        "code": "000807",
+        "shares": 13042.841269,
+        "avg_cost": 14.79478,
+        "cost_basis": 192965.97,
+        "side_last": "sell",
+        "reason": "rebalance"
+      }
+    ],
+    "n_pos": 4
+  },
+  {
+    "date": "2025-07-14",
+    "positions": [
+      {
+        "code": "000708",
+        "shares": 17403.685409,
+        "avg_cost": 10.97096,
+        "cost_basis": 190935.14,
+        "side_last": "sell",
+        "reason": "rebalance"
+      },
+      {
+        "code": "000776",
+        "shares": 12350.378585,
+        "avg_cost": 16.3163,
+        "cost_basis": 201512.48,
+        "side_last": "buy",
+        "reason": "rebalance"
+      },
+      {
+        "code": "000792",
+        "shares": 11745.385855,
+        "avg_cost": 16.50649,
+        "cost_basis": 193875.09,
+        "side_last": "sell",
+        "reason": "rebalance"
+      },
+      {
+        "code": "000807",
+        "shares": 13554.630847,
+        "avg_cost": 14.818969,
+        "cost_basis": 200865.65,
+        "side_last": "buy",
+        "reason": "rebalance"
+      }
+    ],
+    "n_pos": 4
+  },
+  {
+    "date": "2025-07-16",
+    "positions": [
+      {
+        "code": "000708",
+        "shares": 17403.685409,
+        "avg_cost": 10.97096,
+        "cost_basis": 190935.14,
+        "side_last": "sell",
+        "reason": "rebalance"
+      },
+      {
+        "code": "000776",
+        "shares": 12350.378585,
+        "avg_cost": 16.3163,
+        "cost_basis": 201512.48,
+        "side_last": "buy",
+        "reason": "rebalance"
+      },
+      {
+        "code": "000792",
+        "shares": 11745.385855,
+        "avg_cost": 16.50649,
+        "cost_basis": 193875.09,
+        "side_last": "sell",
+        "reason": "rebalance"
+      }
+    ],
+    "n_pos": 3
+  },
+  {
+    "date": "2025-07-21",
+    "positions": [
+      {
+        "code": "000708",
+        "shares": 23032.627163,
+        "avg_cost": 11.257182,
+        "cost_basis": 259282.48,
+        "side_last": "buy",
+        "reason": "rebalance"
+      },
+      {
+        "code": "000776",
+        "shares": 16057.153398,
+        "avg_cost": 16.570488,
+        "cost_basis": 266074.86,
+        "side_last": "buy",
+        "reason": "rebalance"
+      },
+      {
+        "code": "000792",
+        "shares": 15401.888383,
+        "avg_cost": 16.898602,
+        "cost_basis": 260270.38,
+        "side_last": "buy",
+        "reason": "rebalance"
+      }
+    ],
+    "n_pos": 3
+  },
+  {
+    "date": "2025-07-28",
+    "positions": [
+      {
+        "code": "000708",
+        "shares": 23032.627163,
+        "avg_cost": 11.257182,
+        "cost_basis": 259282.48,
+        "side_last": "buy",
+        "reason": "rebalance"
+      },
+      {
+        "code": "000776",
+        "shares": 15248.629154,
+        "avg_cost": 16.570488,
+        "cost_basis": 252677.22,
+        "side_last": "sell",
+        "reason": "rebalance"
+      },
+      {
+        "code": "000792",
+        "shares": 15820.218945,
+        "avg_cost": 16.944613,
+        "cost_basis": 268067.48,
+        "side_last": "buy",
+        "reason": "rebalance"
+      }
+    ],
+    "n_pos": 3
+  },
+  {
+    "date": "2025-08-04",
+    "positions": [
+      {
+        "code": "000708",
+        "shares": 23467.710229,
+        "avg_cost": 11.273774,
+        "cost_basis": 264569.67,
+        "side_last": "buy",
+        "reason": "rebalance"
+      },
+      {
+        "code": "000776",
+        "shares": 15248.629154,
+        "avg_cost": 16.570488,
+        "cost_basis": 252677.22,
+        "side_last": "sell",
+        "reason": "rebalance"
+      },
+      {
+        "code": "000792",
+        "shares": 15820.218945,
+        "avg_cost": 16.944613,
+        "cost_basis": 268067.48,
+        "side_last": "buy",
+        "reason": "rebalance"
+      }
+    ],
+    "n_pos": 3
+  },
+  {
+    "date": "2025-08-05",
+    "positions": [
+      {
+        "code": "000708",
+        "shares": 23467.710229,
+        "avg_cost": 11.273774,
+        "cost_basis": 264569.67,
+        "side_last": "buy",
+        "reason": "rebalance"
+      },
+      {
+        "code": "000792",
+        "shares": 15820.218945,
+        "avg_cost": 16.944613,
+        "cost_basis": 268067.48,
+        "side_last": "buy",
+        "reason": "rebalance"
+      }
+    ],
+    "n_pos": 2
+  },
+  {
+    "date": "2025-08-08",
+    "positions": [
+      {
+        "code": "000792",
+        "shares": 15820.218945,
+        "avg_cost": 16.944613,
+        "cost_basis": 268067.48,
+        "side_last": "buy",
+        "reason": "rebalance"
+      }
+    ],
+    "n_pos": 1
+  },
+  {
+    "date": "2025-08-11",
+    "positions": [
+      {
+        "code": "000792",
+        "shares": 44949.303707,
+        "avg_cost": 18.749476,
+        "cost_basis": 842775.88,
+        "side_last": "buy",
+        "reason": "rebalance"
+      }
+    ],
+    "n_pos": 1
+  },
+  {
+    "date": "2025-09-22",
+    "positions": [
+      {
+        "code": "000157",
+        "shares": 60502.350571,
+        "avg_cost": 7.34734,
+        "cost_basis": 444531.34,
+        "side_last": "buy",
+        "reason": "rebalance"
+      }
+    ],
+    "n_pos": 1
+  },
+  {
+    "date": "2025-09-29",
+    "positions": [
+      {
+        "code": "000157",
+        "shares": 60502.350571,
+        "avg_cost": 7.34734,
+        "cost_basis": 444531.34,
+        "side_last": "buy",
+        "reason": "rebalance"
+      },
+      {
+        "code": "000708",
+        "shares": 34889.000383,
+        "avg_cost": 12.65264,
+        "cost_basis": 441437.96,
+        "side_last": "buy",
+        "reason": "rebalance"
+      }
+    ],
+    "n_pos": 2
+  },
+  {
+    "date": "2025-10-27",
+    "positions": [
+      {
+        "code": "000157",
+        "shares": 61398.964662,
+        "avg_cost": 7.353333,
+        "cost_basis": 451487.05,
+        "side_last": "buy",
+        "reason": "rebalance"
+      },
+      {
+        "code": "000708",
+        "shares": 33631.122233,
+        "avg_cost": 12.65264,
+        "cost_basis": 425522.48,
+        "side_last": "sell",
+        "reason": "rebalance"
+      }
+    ],
+    "n_pos": 2
+  },
+  {
+    "date": "2025-10-30",
+    "positions": [
+      {
+        "code": "000708",
+        "shares": 33631.122233,
+        "avg_cost": 12.65264,
+        "cost_basis": 425522.48,
+        "side_last": "sell",
+        "reason": "rebalance"
+      }
+    ],
+    "n_pos": 1
+  },
+  {
+    "date": "2025-11-03",
+    "positions": [
+      {
+        "code": "000708",
+        "shares": 66502.104647,
+        "avg_cost": 13.424495,
+        "cost_basis": 892757.2,
+        "side_last": "buy",
+        "reason": "rebalance"
+      }
+    ],
+    "n_pos": 1
+  },
+  {
+    "date": "2025-11-24",
+    "positions": [
+      {
+        "code": "000708",
+        "shares": 22143.635474,
+        "avg_cost": 13.424495,
+        "cost_basis": 297267.13,
+        "side_last": "sell",
+        "reason": "rebalance"
+      }
+    ],
+    "n_pos": 1
+  },
+  {
+    "date": "2025-11-27",
+    "positions": [],
+    "n_pos": 0
+  },
+  {
+    "date": "2026-01-12",
+    "positions": [
+      {
+        "code": "000338",
+        "shares": 52043.635987,
+        "avg_cost": 18.3183,
+        "cost_basis": 953350.94,
+        "side_last": "buy",
+        "reason": "rebalance"
+      }
+    ],
+    "n_pos": 1
+  },
+  {
+    "date": "2026-01-23",
+    "positions": [],
+    "n_pos": 0
+  }
+]

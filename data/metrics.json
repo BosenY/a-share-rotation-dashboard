@@ -1,0 +1,22 @@
+{
+  "cagr": 0.0756,
+  "cagr_pct": "7.56%",
+  "max_dd": -0.1528,
+  "max_dd_pct": "-15.28%",
+  "sharpe": 0.79,
+  "win_rate": 0.684,
+  "win_rate_pct": "68.4%",
+  "turnover": 4.18,
+  "start_date": "2023-01-03",
+  "end_date": "2026-09-04",
+  "start_nav": 1000000.0,
+  "final_nav": 1306466.5,
+  "total_return": 0.306467,
+  "total_return_pct": "30.65%",
+  "trade_count": 46,
+  "buy_count": 25,
+  "sell_count": 21,
+  "n_days": 891,
+  "title": "缩量筑底轮动 · 持仓与操作",
+  "one_liner": "缩量筑底 + 温和放量突破 + 金叉确认，叠加沪深300趋势/避险与行业死叉预警的周度轮动策略。"
+}
