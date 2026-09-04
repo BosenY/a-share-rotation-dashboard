@@ -14,17 +14,19 @@ OUT = ROOT / "data"
 
 # Reported backtest KPIs (sample run documented in README)
 FIXED_METRICS = {
-    "cagr": 0.0572,
-    "cagr_pct": "5.72%",
-    "max_dd": -0.1472,
-    "max_dd_pct": "-14.72%",
-    "sharpe": 0.473,
-    "win_rate": 0.496,
-    "win_rate_pct": "49.6%",
-    "turnover": 26.51,
+    "cagr": 0.0304,
+    "cagr_pct": "3.04%",
+    "max_dd": -0.2916,
+    "max_dd_pct": "-29.16%",
+    "sharpe": 0.267,
+    "win_rate": 0.443,
+    "win_rate_pct": "44.3%",
+    "turnover": 62.23,
     "universe": "hs300",
     "max_stocks": 300,
     "n_panels": 300,
+    "avg_invested": 0.7065,
+    "avg_invested_pct": "70.65%",
 }
 
 STOCK_NAMES = {
