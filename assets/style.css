@@ -448,3 +448,123 @@ tbody tr:hover { background: rgba(201, 100, 66, 0.04); }
   .pos-chip { min-width: 7.25rem; }
   th, td { padding: 0.55rem 0.7rem; }
 }
+
+/* —— Tab panels (only active visible) —— */
+.tab-panel { display: none; margin-bottom: 0; scroll-margin-top: 0; }
+.tab-panel.is-active { display: block; }
+.tab-panel[hidden] { display: none !important; }
+
+/* —— Time filter bar —— */
+.time-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1rem;
+  margin-bottom: 1.15rem;
+  padding: 0.85rem 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.preset-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.chip-btn {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: var(--bg-elev);
+  color: var(--muted);
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  font-weight: 500;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: 0.15s ease;
+  white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+}
+.chip-btn:hover {
+  color: var(--text);
+  border-color: rgba(201, 100, 66, 0.35);
+  background: var(--accent-soft);
+}
+.chip-btn.is-active {
+  color: #fff;
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 4px 12px rgba(201, 100, 66, 0.22);
+}
+.custom-range {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  margin-left: auto;
+}
+.range-label {
+  font-size: 0.75rem;
+  color: var(--muted);
+  margin-right: 0.15rem;
+}
+.range-sep {
+  font-size: 0.75rem;
+  color: var(--dim);
+}
+.date-input {
+  width: auto;
+  min-width: 8.5rem;
+  font-family: var(--mono);
+  font-size: 0.75rem;
+}
+.btn-apply {
+  appearance: none;
+  border: 1px solid rgba(201, 100, 66, 0.4);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  font-weight: 600;
+  padding: 0.42rem 0.9rem;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.15s ease;
+}
+.btn-apply:hover {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+
+@media (max-width: 640px) {
+  .time-filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+    padding: 0.75rem;
+  }
+  .preset-chips {
+    width: 100%;
+  }
+  .chip-btn {
+    flex: 1 1 auto;
+    text-align: center;
+    padding: 0.5rem 0.55rem;
+    font-size: 0.72rem;
+  }
+  .custom-range {
+    margin-left: 0;
+    width: 100%;
+  }
+  .date-input {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  .btn-apply {
+    width: 100%;
+    margin-top: 0.15rem;
+  }
+}

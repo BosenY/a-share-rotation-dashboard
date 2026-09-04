@@ -56,7 +56,17 @@
     },
   ];
 
-  const state = { metrics: null, equity: [], trades: [], holdings: [], stockNames: STOCK_NAMES };
+  const TAB_IDS = ["overview", "holdings", "trades", "strategy"];
+
+  const state = {
+    metrics: null,
+    equity: [],
+    trades: [],
+    holdings: [],
+    stockNames: STOCK_NAMES,
+    holdingsRange: { preset: "all", start: null, end: null },
+    tradesRange: { preset: "all", start: null, end: null },
+  };
   const $ = (sel) => document.querySelector(sel);
 
   function padCode(code) {
@@ -145,6 +155,68 @@
     const n = stockName(c);
     if (n && n.toLowerCase().includes(q)) return true;
     return false;
+  }
+
+  /** YYYY-MM-DD from a Date (local calendar) */
+  function toISODate(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return y + "-" + m + "-" + day;
+  }
+
+  /** Parse YYYY-MM-DD or Date-like; return comparable string or null */
+  function normalizeDateStr(v) {
+    if (!v) return null;
+    const s = String(v).trim().slice(0, 10);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
+    return s;
+  }
+
+  /**
+   * Resolve inclusive [start, end] from a range state.
+   * Presets are relative to the latest date in the given items (or today).
+   */
+  function resolveRange(rangeState, items) {
+    let endAnchor = null;
+    if (items && items.length) {
+      for (let i = items.length - 1; i >= 0; i--) {
+        const d = normalizeDateStr(items[i].date);
+        if (d) {
+          endAnchor = d;
+          break;
+        }
+      }
+    }
+    if (!endAnchor) endAnchor = toISODate(new Date());
+
+    const preset = rangeState.preset || "all";
+    if (preset === "custom") {
+      return {
+        start: normalizeDateStr(rangeState.start),
+        end: normalizeDateStr(rangeState.end),
+      };
+    }
+    if (preset === "all") {
+      return { start: null, end: null };
+    }
+
+    const end = new Date(endAnchor + "T12:00:00");
+    const start = new Date(end);
+    if (preset === "1w") start.setDate(start.getDate() - 7);
+    else if (preset === "1m") start.setMonth(start.getMonth() - 1);
+    else if (preset === "1y") start.setFullYear(start.getFullYear() - 1);
+    else return { start: null, end: null };
+
+    return { start: toISODate(start), end: endAnchor };
+  }
+
+  function inDateRange(dateStr, range) {
+    const d = normalizeDateStr(dateStr);
+    if (!d) return false;
+    if (range.start && d < range.start) return false;
+    if (range.end && d > range.end) return false;
+    return true;
   }
 
   /**
@@ -402,19 +474,21 @@
     for (let i = holdings.length - 1; i >= 0; i--) {
       if (holdings[i].n_pos > 0) return holdings[i];
     }
-    return holdings[holdings.length - 1] || null;
+    return null;
   }
 
   function renderLatestBanner(snap) {
     const el = $("#holdings-latest");
     if (!snap) {
-      el.innerHTML = '<p class="section-desc">暂无持仓快照</p>';
+      el.innerHTML =
+        '<div class="card-meta"><div><span class="section-kicker">RANGE</span>' +
+        '<p class="section-desc" style="margin-top:0.35rem">该区间无持仓</p></div></div>';
       return;
     }
     if (snap.n_pos === 0) {
       el.innerHTML =
         '<div class="card-meta"><div><span class="section-kicker">LATEST</span>' +
-        '<p class="section-desc" style="margin-top:0.35rem">回测期末为空仓（现金） · 最近交易日快照 ' +
+        '<p class="section-desc" style="margin-top:0.35rem">该区间内无非空持仓 · 最近快照 ' +
         snap.date +
         '</p></div><span class="badge badge-reason">n_pos = 0</span></div>';
       return;
@@ -433,7 +507,7 @@
       .join("");
     el.innerHTML =
       '<div class="card-meta"><div><span class="section-kicker">CURRENT / LATEST</span>' +
-      '<p style="margin:0.35rem 0 0;color:var(--text);font-size:0.95rem;font-weight:500">最近非空持仓 · ' +
+      '<p style="margin:0.35rem 0 0;color:var(--text);font-size:0.95rem;font-weight:500">区间内最近非空持仓 · ' +
       snap.date +
       " · " +
       snap.n_pos +
@@ -442,10 +516,15 @@
       "</div>";
   }
 
+  function holdingsInRange() {
+    const range = resolveRange(state.holdingsRange, state.holdings);
+    return state.holdings.filter((h) => inDateRange(h.date, range));
+  }
+
   function filteredHoldings() {
     const q = ($("#holdings-code-filter").value || "").trim();
     const nonempty = $("#holdings-nonempty").checked;
-    return state.holdings.filter((h) => {
+    return holdingsInRange().filter((h) => {
       if (nonempty && h.n_pos === 0) return false;
       if (!q) return true;
       return h.positions.some((p) => matchesCodeOrName(p.code, q));
@@ -453,10 +532,18 @@
   }
 
   function renderHoldings() {
-    const latest = latestNonEmpty(state.holdings);
+    const inRange = holdingsInRange();
+    const latest = latestNonEmpty(inRange);
     renderLatestBanner(latest);
     const list = filteredHoldings().slice().reverse();
     const latestDate = latest && latest.n_pos > 0 ? latest.date : null;
+
+    if (!list.length) {
+      $("#holdings-list").innerHTML =
+        '<p class="section-desc" style="margin:0.5rem 0 0">该区间无匹配快照</p>';
+      return;
+    }
+
     $("#holdings-list").innerHTML = list
       .map((h) => {
         const isLatest = latestDate && h.date === latestDate;
@@ -502,7 +589,9 @@
     const q = ($("#trade-code").value || "").trim();
     const side = $("#trade-side").value;
     const reason = $("#trade-reason").value;
+    const range = resolveRange(state.tradesRange, state.trades);
     return state.trades.filter((t) => {
+      if (!inDateRange(t.date, range)) return false;
       if (q && !matchesCodeOrName(t.code, q)) return false;
       if (side && t.side !== side) return false;
       if (reason && t.reason !== reason) return false;
@@ -595,26 +684,145 @@
     ).join("");
   }
 
-  function setupNav() {
-    const links = document.querySelectorAll(".nav-link");
-    const sections = Array.prototype.map.call(links, (a) =>
-      $(a.getAttribute("href"))
-    );
-    function setActive() {
-      let cur = sections[0];
-      const y = window.scrollY + 120;
-      sections.forEach((s) => {
-        if (s && s.offsetTop <= y) cur = s;
-      });
-      links.forEach((a) => {
-        a.classList.toggle(
-          "active",
-          a.getAttribute("href") === "#" + (cur && cur.id)
-        );
+  /* —— Tab navigation (hash-persisted, show/hide panels) —— */
+  function activateTab(tabId, opts) {
+    const id = TAB_IDS.indexOf(tabId) >= 0 ? tabId : "overview";
+    const pushHash = !opts || opts.pushHash !== false;
+
+    document.querySelectorAll(".tab-panel").forEach((panel) => {
+      const active = panel.getAttribute("data-panel") === id;
+      panel.classList.toggle("is-active", active);
+      if (active) panel.removeAttribute("hidden");
+      else panel.setAttribute("hidden", "");
+    });
+
+    document.querySelectorAll(".nav-link").forEach((a) => {
+      const active = a.getAttribute("data-tab") === id;
+      a.classList.toggle("active", active);
+      a.setAttribute("aria-selected", active ? "true" : "false");
+    });
+
+    if (pushHash) {
+      const next = "#" + id;
+      if (location.hash !== next) {
+        history.replaceState(null, "", next);
+      }
+    }
+
+    // Redraw chart when overview becomes visible (canvas may have been 0-width)
+    if (id === "overview" && state.equity.length) {
+      requestAnimationFrame(function () {
+        drawEquityChart(state.equity);
       });
     }
-    window.addEventListener("scroll", setActive, { passive: true });
-    setActive();
+  }
+
+  function tabFromHash() {
+    const raw = (location.hash || "").replace(/^#/, "").trim();
+    if (TAB_IDS.indexOf(raw) >= 0) return raw;
+    return "overview";
+  }
+
+  function setupNav() {
+    document.querySelectorAll(".nav-link").forEach((a) => {
+      a.addEventListener("click", function (ev) {
+        ev.preventDefault();
+        const tab = a.getAttribute("data-tab") || "overview";
+        activateTab(tab);
+      });
+    });
+    window.addEventListener("hashchange", function () {
+      activateTab(tabFromHash(), { pushHash: false });
+    });
+    activateTab(tabFromHash(), { pushHash: true });
+  }
+
+  /* —— Time-range filter UI —— */
+  function syncChipActive(scope, preset) {
+    document
+      .querySelectorAll('.chip-btn[data-scope="' + scope + '"]')
+      .forEach((btn) => {
+        btn.classList.toggle("is-active", btn.getAttribute("data-preset") === preset);
+      });
+  }
+
+  function setHoldingsPreset(preset) {
+    state.holdingsRange = { preset: preset, start: null, end: null };
+    syncChipActive("holdings", preset);
+    // Clear custom inputs when picking a preset (except leaving values for convenience)
+    renderHoldings();
+  }
+
+  function setTradesPreset(preset) {
+    state.tradesRange = { preset: preset, start: null, end: null };
+    syncChipActive("trades", preset);
+    renderTrades();
+  }
+
+  function applyHoldingsCustom() {
+    const start = normalizeDateStr($("#holdings-start").value);
+    const end = normalizeDateStr($("#holdings-end").value);
+    if (!start && !end) {
+      setHoldingsPreset("all");
+      return;
+    }
+    let s = start;
+    let e = end;
+    if (s && e && s > e) {
+      const tmp = s;
+      s = e;
+      e = tmp;
+      $("#holdings-start").value = s;
+      $("#holdings-end").value = e;
+    }
+    state.holdingsRange = { preset: "custom", start: s, end: e };
+    syncChipActive("holdings", null); // none of the presets active
+    renderHoldings();
+  }
+
+  function applyTradesCustom() {
+    const start = normalizeDateStr($("#trades-start").value);
+    const end = normalizeDateStr($("#trades-end").value);
+    if (!start && !end) {
+      setTradesPreset("all");
+      return;
+    }
+    let s = start;
+    let e = end;
+    if (s && e && s > e) {
+      const tmp = s;
+      s = e;
+      e = tmp;
+      $("#trades-start").value = s;
+      $("#trades-end").value = e;
+    }
+    state.tradesRange = { preset: "custom", start: s, end: e };
+    syncChipActive("trades", null);
+    renderTrades();
+  }
+
+  function bindTimeFilters() {
+    document.querySelectorAll(".chip-btn").forEach((btn) => {
+      btn.addEventListener("click", function () {
+        const scope = btn.getAttribute("data-scope");
+        const preset = btn.getAttribute("data-preset");
+        if (scope === "holdings") setHoldingsPreset(preset);
+        else if (scope === "trades") setTradesPreset(preset);
+      });
+    });
+    $("#holdings-apply-range").addEventListener("click", applyHoldingsCustom);
+    $("#trades-apply-range").addEventListener("click", applyTradesCustom);
+    // Enter key on date inputs applies custom range
+    ["holdings-start", "holdings-end"].forEach((id) => {
+      document.getElementById(id).addEventListener("keydown", function (ev) {
+        if (ev.key === "Enter") applyHoldingsCustom();
+      });
+    });
+    ["trades-start", "trades-end"].forEach((id) => {
+      document.getElementById(id).addEventListener("keydown", function (ev) {
+        if (ev.key === "Enter") applyTradesCustom();
+      });
+    });
   }
 
   function bindFilters() {
@@ -628,7 +836,12 @@
       el.addEventListener("input", renderTrades);
       el.addEventListener("change", renderTrades);
     });
-    window.addEventListener("resize", () => drawEquityChart(state.equity));
+    window.addEventListener("resize", () => {
+      if ($("#overview").classList.contains("is-active")) {
+        drawEquityChart(state.equity);
+      }
+    });
+    bindTimeFilters();
   }
 
   async function main() {
@@ -661,13 +874,14 @@
       state.holdings = pack[3];
       renderKPIs(state.metrics);
       renderSnapshot(state.metrics);
-      drawEquityChart(state.equity);
       populateReasonFilter();
       renderHoldings();
       renderTrades();
       renderStrategy();
       bindFilters();
       setupNav();
+      // Chart after tab is shown so canvas has width
+      drawEquityChart(state.equity);
     } catch (err) {
       console.error(err);
       document.body.insertAdjacentHTML(

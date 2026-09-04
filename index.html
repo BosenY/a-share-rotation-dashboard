@@ -20,17 +20,17 @@
           <p>A-Share Rotation · Backtest Dashboard</p>
         </div>
       </div>
-      <nav class="nav" id="nav">
-        <a href="#overview" class="nav-link active">总览</a>
-        <a href="#holdings" class="nav-link">持仓时间线</a>
-        <a href="#trades" class="nav-link">操作记录</a>
-        <a href="#strategy" class="nav-link">策略说明</a>
+      <nav class="nav" id="nav" role="tablist">
+        <a href="#overview" class="nav-link active" role="tab" data-tab="overview" aria-selected="true">总览</a>
+        <a href="#holdings" class="nav-link" role="tab" data-tab="holdings" aria-selected="false">持仓时间线</a>
+        <a href="#trades" class="nav-link" role="tab" data-tab="trades" aria-selected="false">操作记录</a>
+        <a href="#strategy" class="nav-link" role="tab" data-tab="strategy" aria-selected="false">策略说明</a>
       </nav>
     </div>
   </header>
 
   <main class="wrap">
-    <section id="overview">
+    <section id="overview" class="tab-panel is-active" role="tabpanel" data-panel="overview">
       <div class="section-head">
         <div>
           <p class="section-kicker">Overview</p>
@@ -60,12 +60,12 @@
       </div>
     </section>
 
-    <section id="holdings">
+    <section id="holdings" class="tab-panel" role="tabpanel" data-panel="holdings" hidden>
       <div class="section-head">
         <div>
           <p class="section-kicker">Holdings</p>
           <h2 class="section-title">持仓时间线</h2>
-          <p class="section-desc">按调仓/交易日重建的仓位快照；高亮为最近一次非空持仓。</p>
+          <p class="section-desc">按调仓/交易日重建的仓位快照；高亮为筛选区间内最近一次非空持仓。</p>
         </div>
         <div class="filters">
           <label for="holdings-code-filter">筛选代码/名称</label>
@@ -76,11 +76,28 @@
           </label>
         </div>
       </div>
+
+      <div class="time-filter-bar" id="holdings-time-filter" aria-label="持仓时间筛选">
+        <div class="preset-chips" role="group" aria-label="时间预设">
+          <button type="button" class="chip-btn" data-preset="1w" data-scope="holdings">最近一周</button>
+          <button type="button" class="chip-btn" data-preset="1m" data-scope="holdings">最近一个月</button>
+          <button type="button" class="chip-btn" data-preset="1y" data-scope="holdings">近一年</button>
+          <button type="button" class="chip-btn is-active" data-preset="all" data-scope="holdings">全部</button>
+        </div>
+        <div class="custom-range">
+          <label class="range-label" for="holdings-start">自定义</label>
+          <input id="holdings-start" class="input date-input" type="date" />
+          <span class="range-sep">至</span>
+          <input id="holdings-end" class="input date-input" type="date" />
+          <button type="button" id="holdings-apply-range" class="btn-apply">应用</button>
+        </div>
+      </div>
+
       <div id="holdings-latest" class="card card-pad latest-card"></div>
       <div id="holdings-list" class="holdings-list"></div>
     </section>
 
-    <section id="trades">
+    <section id="trades" class="tab-panel" role="tabpanel" data-panel="trades" hidden>
       <div class="section-head">
         <div>
           <p class="section-kicker">Trades</p>
@@ -99,6 +116,23 @@
           </select>
         </div>
       </div>
+
+      <div class="time-filter-bar" id="trades-time-filter" aria-label="操作时间筛选">
+        <div class="preset-chips" role="group" aria-label="时间预设">
+          <button type="button" class="chip-btn" data-preset="1w" data-scope="trades">最近一周</button>
+          <button type="button" class="chip-btn" data-preset="1m" data-scope="trades">最近一个月</button>
+          <button type="button" class="chip-btn" data-preset="1y" data-scope="trades">近一年</button>
+          <button type="button" class="chip-btn is-active" data-preset="all" data-scope="trades">全部</button>
+        </div>
+        <div class="custom-range">
+          <label class="range-label" for="trades-start">自定义</label>
+          <input id="trades-start" class="input date-input" type="date" />
+          <span class="range-sep">至</span>
+          <input id="trades-end" class="input date-input" type="date" />
+          <button type="button" id="trades-apply-range" class="btn-apply">应用</button>
+        </div>
+      </div>
+
       <div class="card table-card">
         <div class="table-scroll">
           <table>
@@ -121,7 +155,7 @@
       </div>
     </section>
 
-    <section id="strategy">
+    <section id="strategy" class="tab-panel" role="tabpanel" data-panel="strategy" hidden>
       <div class="section-head">
         <div>
           <p class="section-kicker">Strategy</p>
