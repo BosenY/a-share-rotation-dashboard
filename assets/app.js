@@ -1,6 +1,18 @@
-/* A-share rotation dashboard — vanilla JS, no CDN chart lib */
+/* A-share rotation dashboard — Claude UI, vanilla JS, no CDN chart lib */
 (function () {
   "use strict";
+
+  const STOCK_NAMES = {
+    "000002": "万科A",
+    "000157": "中联重科",
+    "000166": "申万宏源",
+    "000338": "潍柴动力",
+    "000617": "中油资本",
+    "000708": "中信特钢",
+    "000776": "广发证券",
+    "000792": "盐湖股份",
+    "000807": "云铝股份",
+  };
 
   const REASON_LABELS = {
     rebalance: "再平衡",
@@ -44,8 +56,65 @@
     },
   ];
 
-  const state = { metrics: null, equity: [], trades: [], holdings: [] };
+  const state = { metrics: null, equity: [], trades: [], holdings: [], stockNames: STOCK_NAMES };
   const $ = (sel) => document.querySelector(sel);
+
+  function padCode(code) {
+    const s = String(code == null ? "" : code).trim();
+    if (/^\d+$/.test(s)) return s.padStart(6, "0");
+    return s;
+  }
+
+  function stockName(code) {
+    const c = padCode(code);
+    const map = state.stockNames || STOCK_NAMES;
+    return map[c] || map[code] || "";
+  }
+
+  /** "潍柴动力 000338" */
+  function stockLabel(code) {
+    const c = padCode(code);
+    const n = stockName(c);
+    return n ? n + " " + c : c;
+  }
+
+  /** Two-line HTML: name prominent + code muted mono */
+  function stockCellHtml(code) {
+    const c = padCode(code);
+    const n = stockName(c);
+    if (n) {
+      return (
+        '<div class="stock-cell"><span class="name">' +
+        escapeHtml(n) +
+        '</span><span class="code">' +
+        escapeHtml(c) +
+        "</span></div>"
+      );
+    }
+    return '<div class="stock-cell"><span class="name mono">' + escapeHtml(c) + "</span></div>";
+  }
+
+  function chipHtml(code, accent) {
+    const c = padCode(code);
+    const n = stockName(c);
+    return (
+      '<span class="name">' +
+      escapeHtml(n || c) +
+      '</span><span class="code' +
+      (accent ? " accent" : "") +
+      '">' +
+      escapeHtml(c) +
+      "</span>"
+    );
+  }
+
+  function escapeHtml(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
 
   function fmtNum(n, digits) {
     if (digits == null) digits = 2;
@@ -56,8 +125,98 @@
     });
   }
 
+  function fmtPct(n, digits) {
+    if (digits == null) digits = 2;
+    if (n == null || Number.isNaN(n)) return "—";
+    const sign = n > 0 ? "+" : "";
+    return sign + Number(n).toFixed(digits) + "%";
+  }
+
   function reasonLabel(r) {
     return REASON_LABELS[r] || r || "—";
+  }
+
+  function matchesCodeOrName(code, query) {
+    if (!query) return true;
+    const q = query.trim().toLowerCase();
+    if (!q) return true;
+    const c = padCode(code);
+    if (c.includes(q) || String(code).toLowerCase().includes(q)) return true;
+    const n = stockName(c);
+    if (n && n.toLowerCase().includes(q)) return true;
+    return false;
+  }
+
+  /**
+   * Enrich trades with pnl / pnl_pct / pnl_label using average-cost basis.
+   * Prefer server-provided fields when present on sell rows.
+   */
+  function enrichTradesWithPnl(trades) {
+    const book = Object.create(null); // code -> { shares, costBasis }
+    return trades.map(function (t) {
+      const row = Object.assign({}, t);
+      const code = padCode(t.code);
+      const side = String(t.side || "").toLowerCase();
+      const shares = Number(t.shares) || 0;
+      const price = Number(t.price) || 0;
+
+      if (side === "buy") {
+        const prev = book[code];
+        if (!prev || prev.shares <= 1e-9) {
+          book[code] = { shares: shares, costBasis: shares * price };
+        } else {
+          const ns = prev.shares + shares;
+          const nb = prev.costBasis + shares * price;
+          book[code] = { shares: ns, costBasis: nb };
+        }
+        if (row.pnl == null) {
+          row.pnl = null;
+          row.pnl_pct = null;
+          row.pnl_label = null;
+        }
+        return row;
+      }
+
+      if (side === "sell") {
+        const prev = book[code];
+        let avgCost = 0;
+        if (prev && prev.shares > 1e-9) {
+          avgCost = prev.costBasis / prev.shares;
+          const sellShares = Math.min(shares, prev.shares);
+          const remain = prev.shares - sellShares;
+          if (remain <= 1e-6) {
+            delete book[code];
+          } else {
+            book[code] = {
+              shares: remain,
+              costBasis: prev.costBasis * (remain / prev.shares),
+            };
+          }
+        }
+
+        if (row.pnl != null && row.pnl_pct != null && row.pnl_label) {
+          return row;
+        }
+
+        // Prefer amount vs cost basis; fallback price * shares
+        const sellAmount =
+          t.amount != null && !Number.isNaN(Number(t.amount))
+            ? Number(t.amount)
+            : price * shares;
+        const costAmount = avgCost * shares;
+        const pnl = sellAmount - costAmount;
+        const pnlPct = costAmount > 1e-9 ? (pnl / costAmount) * 100 : null;
+        row.pnl = Math.round(pnl * 100) / 100;
+        row.pnl_pct =
+          pnlPct == null ? null : Math.round(pnlPct * 100) / 100;
+        row.pnl_label =
+          pnl > 0.005 ? "挣了" : pnl < -0.005 ? "赔了" : "持平";
+        row._avg_cost = Math.round(avgCost * 1e6) / 1e6;
+        return row;
+      }
+
+      return row;
+    });
   }
 
   async function loadJSON(path) {
@@ -73,7 +232,7 @@
       { label: "Sharpe", value: String(m.sharpe), cls: "neu" },
       { label: "胜率", value: m.win_rate_pct, cls: "pos" },
       { label: "年化换手", value: String(m.turnover), cls: "neu" },
-      { label: "期末净值", value: fmtNum(m.final_nav, 0), cls: "pos" },
+      { label: "累计收益", value: m.total_return_pct, cls: "pos" },
     ];
     $("#kpi-grid").innerHTML = items
       .map(
@@ -129,22 +288,26 @@
     const pad = { t: 16, r: 16, b: 36, l: 54 };
     const w = cssW - pad.l - pad.r;
     const h = cssH - pad.t - pad.b;
-    const navs = equity.map((d) => d.nav);
-    let min = Math.min.apply(null, navs);
-    let max = Math.max.apply(null, navs);
+    const startNav = equity[0].nav || 1;
+    const rets = equity.map((d) => ((d.nav / startNav) - 1) * 100);
+    let min = Math.min.apply(null, rets);
+    let max = Math.max.apply(null, rets);
+    // include zero baseline when possible
+    if (min > 0) min = 0;
+    if (max < 0) max = 0;
     const span = max - min || 1;
-    min -= span * 0.05;
-    max += span * 0.05;
+    min -= span * 0.08;
+    max += span * 0.08;
 
     const xAt = (i) => pad.l + (w * i) / Math.max(equity.length - 1, 1);
     const yAt = (v) => pad.t + h * (1 - (v - min) / (max - min));
 
     ctx.clearRect(0, 0, cssW, cssH);
 
-    // grid
-    ctx.strokeStyle = "rgba(255,255,255,0.05)";
+    // warm grid
+    ctx.strokeStyle = "rgba(232, 228, 220, 0.95)";
     ctx.lineWidth = 1;
-    ctx.fillStyle = "#64748b";
+    ctx.fillStyle = "#9a9590";
     ctx.font = "11px JetBrains Mono, monospace";
     const ticks = 5;
     for (let i = 0; i <= ticks; i++) {
@@ -154,8 +317,20 @@
       ctx.moveTo(pad.l, y);
       ctx.lineTo(pad.l + w, y);
       ctx.stroke();
-      const label = (v / 10000).toFixed(0) + "万";
-      ctx.fillText(label, 8, y + 3);
+      const label = (v >= 0 ? "+" : "") + v.toFixed(0) + "%";
+      ctx.fillText(label, 6, y + 3);
+    }
+
+    // zero line
+    if (min < 0 && max > 0) {
+      const y0 = yAt(0);
+      ctx.strokeStyle = "rgba(111, 107, 102, 0.35)";
+      ctx.setLineDash([4, 4]);
+      ctx.beginPath();
+      ctx.moveTo(pad.l, y0);
+      ctx.lineTo(pad.l + w, y0);
+      ctx.stroke();
+      ctx.setLineDash([]);
     }
 
     // x labels
@@ -164,23 +339,24 @@
       const idx = Math.round(((equity.length - 1) * i) / Math.max(xTicks - 1, 1));
       const x = xAt(idx);
       const label = equity[idx].date.slice(2);
-      ctx.fillStyle = "#64748b";
+      ctx.fillStyle = "#9a9590";
       ctx.fillText(label, x - 28, cssH - 12);
     }
 
-    // area + line
+    // terracotta area + line
     const grad = ctx.createLinearGradient(0, pad.t, 0, pad.t + h);
-    grad.addColorStop(0, "rgba(61,156,240,0.35)");
-    grad.addColorStop(1, "rgba(61,156,240,0.00)");
+    grad.addColorStop(0, "rgba(201, 100, 66, 0.28)");
+    grad.addColorStop(1, "rgba(201, 100, 66, 0.00)");
     ctx.beginPath();
-    equity.forEach((d, i) => {
+    rets.forEach((v, i) => {
       const x = xAt(i);
-      const y = yAt(d.nav);
+      const y = yAt(v);
       if (i === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
     });
-    ctx.strokeStyle = "#3d9cf0";
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = "#c96442";
+    ctx.lineWidth = 2.25;
+    ctx.lineJoin = "round";
     ctx.stroke();
     ctx.lineTo(xAt(equity.length - 1), pad.t + h);
     ctx.lineTo(xAt(0), pad.t + h);
@@ -189,15 +365,15 @@
     ctx.fill();
 
     const last = equity[equity.length - 1];
+    const lastRet = ((last.nav / startNav) - 1) * 100;
     $("#nav-last").textContent =
-      "最新 " + last.date + " · " + fmtNum(last.nav, 2);
+      "最新 " + last.date + " · " + fmtPct(lastRet, 2);
 
-    // hover
     if (!canvas._bound) {
       canvas._bound = true;
       const tip = document.createElement("div");
       tip.style.cssText =
-        "position:absolute;pointer-events:none;display:none;background:#0c1220;border:1px solid rgba(255,255,255,.1);color:#e2e8f0;font:12px JetBrains Mono,monospace;padding:6px 8px;border-radius:6px;z-index:2;";
+        "position:absolute;pointer-events:none;display:none;background:#ffffff;border:1px solid #e8e4dc;color:#1f1e1d;font:12px Inter,Noto Sans SC,sans-serif;padding:6px 10px;border-radius:10px;z-index:2;box-shadow:0 8px 24px rgba(31,30,29,0.08);";
       parent.style.position = "relative";
       parent.appendChild(tip);
       canvas.addEventListener("mousemove", (ev) => {
@@ -210,10 +386,11 @@
           return;
         }
         const d = state.equity[idx];
+        const ret = ((d.nav / startNav) - 1) * 100;
         tip.style.display = "block";
-        tip.style.left = Math.min(rect.width - 140, Math.max(8, x + 10)) + "px";
+        tip.style.left = Math.min(rect.width - 160, Math.max(8, x + 10)) + "px";
         tip.style.top = "12px";
-        tip.textContent = d.date + "  NAV " + fmtNum(d.nav, 2);
+        tip.textContent = d.date + "  " + fmtPct(ret, 2);
       });
       canvas.addEventListener("mouseleave", () => {
         tip.style.display = "none";
@@ -245,9 +422,9 @@
     const chips = snap.positions
       .map(
         (p) =>
-          '<div class="pos-chip"><span class="code accent">' +
-          p.code +
-          '</span><span class="sub">' +
+          '<div class="pos-chip">' +
+          chipHtml(p.code, true) +
+          '<span class="sub">' +
           fmtNum(p.shares, 2) +
           " 股</span><span class=\"sub\">成本 " +
           fmtNum(p.avg_cost, 3) +
@@ -256,7 +433,7 @@
       .join("");
     el.innerHTML =
       '<div class="card-meta"><div><span class="section-kicker">CURRENT / LATEST</span>' +
-      '<p style="margin:0.35rem 0 0;color:#fff;font-size:0.9rem">最近非空持仓 · ' +
+      '<p style="margin:0.35rem 0 0;color:var(--text);font-size:0.95rem;font-weight:500">最近非空持仓 · ' +
       snap.date +
       " · " +
       snap.n_pos +
@@ -266,12 +443,12 @@
   }
 
   function filteredHoldings() {
-    const code = ($("#holdings-code-filter").value || "").trim();
+    const q = ($("#holdings-code-filter").value || "").trim();
     const nonempty = $("#holdings-nonempty").checked;
     return state.holdings.filter((h) => {
       if (nonempty && h.n_pos === 0) return false;
-      if (!code) return true;
-      return h.positions.some((p) => p.code.includes(code));
+      if (!q) return true;
+      return h.positions.some((p) => matchesCodeOrName(p.code, q));
     });
   }
 
@@ -289,9 +466,9 @@
             : h.positions
                 .map(
                   (p) =>
-                    '<div class="pos-chip"><span class="code">' +
-                    p.code +
-                    '</span><span class="sub">' +
+                    '<div class="pos-chip">' +
+                    chipHtml(p.code, false) +
+                    '<span class="sub">' +
                     fmtNum(p.shares, 2) +
                     " 股 · 均价 " +
                     fmtNum(p.avg_cost, 3) +
@@ -308,7 +485,9 @@
           '"><div class="card-meta"><div><span class="mono">' +
           h.date +
           "</span>" +
-          (isLatest ? '<span class="badge badge-buy tag-latest">最新持仓</span>' : "") +
+          (isLatest
+            ? '<span class="badge badge-buy tag-latest">最新持仓</span>'
+            : "") +
           '</div><span class="muted">' +
           h.n_pos +
           ' 只持仓</span></div><div class="chips">' +
@@ -320,11 +499,11 @@
   }
 
   function filteredTrades() {
-    const code = ($("#trade-code").value || "").trim();
+    const q = ($("#trade-code").value || "").trim();
     const side = $("#trade-side").value;
     const reason = $("#trade-reason").value;
     return state.trades.filter((t) => {
-      if (code && !t.code.includes(code)) return false;
+      if (q && !matchesCodeOrName(t.code, q)) return false;
       if (side && t.side !== side) return false;
       if (reason && t.reason !== reason) return false;
       return true;
@@ -342,6 +521,31 @@
     });
   }
 
+  function pnlCellHtml(t) {
+    if (String(t.side).toLowerCase() !== "sell" || t.pnl == null) {
+      return '<span class="pnl-dash">—</span>';
+    }
+    const cls = t.pnl > 0.005 ? "pnl-pos" : t.pnl < -0.005 ? "pnl-neg" : "pnl-dash";
+    const label = t.pnl_label || (t.pnl > 0 ? "挣了" : t.pnl < 0 ? "赔了" : "持平");
+    const amt =
+      (t.pnl > 0 ? "+" : "") + fmtNum(t.pnl, 2);
+    const pct =
+      t.pnl_pct == null
+        ? ""
+        : '<span class="pct">' + fmtPct(t.pnl_pct, 2) + "</span>";
+    return (
+      '<div class="pnl-cell ' +
+      cls +
+      '"><span>' +
+      label +
+      " " +
+      amt +
+      "</span>" +
+      pct +
+      "</div>"
+    );
+  }
+
   function renderTrades() {
     const rows = filteredTrades().slice().reverse();
     $("#trades-tbody").innerHTML = rows
@@ -353,8 +557,8 @@
         return (
           "<tr><td class=\"mono\">" +
           t.date +
-          '</td><td class="mono accent">' +
-          t.code +
+          "</td><td>" +
+          stockCellHtml(t.code) +
           "</td><td>" +
           sideBadge +
           '</td><td class="right mono">' +
@@ -363,8 +567,8 @@
           fmtNum(t.shares, 2) +
           '</td><td class="right mono">' +
           fmtNum(t.amount, 2) +
-          '</td><td class="right mono muted">' +
-          fmtNum(t.cost, 2) +
+          '</td><td class="right">' +
+          pnlCellHtml(t) +
           '</td><td><span class="badge badge-reason">' +
           reasonLabel(t.reason) +
           "</span></td></tr>"
@@ -430,9 +634,11 @@
   async function main() {
     try {
       let pack;
+      let namesFromBundle = null;
       if (window.ASR_DATA) {
         const d = window.ASR_DATA;
         pack = [d.metrics, d.equity, d.trades, d.holdings];
+        if (d.stock_names) namesFromBundle = d.stock_names;
       } else {
         pack = await Promise.all([
           loadJSON("data/metrics.json"),
@@ -440,10 +646,18 @@
           loadJSON("data/trades.json"),
           loadJSON("data/holdings_timeline.json"),
         ]);
+        try {
+          namesFromBundle = await loadJSON("data/stock_names.json");
+        } catch (_) {
+          /* optional */
+        }
+      }
+      if (namesFromBundle && typeof namesFromBundle === "object") {
+        state.stockNames = Object.assign({}, STOCK_NAMES, namesFromBundle);
       }
       state.metrics = pack[0];
       state.equity = pack[1];
-      state.trades = pack[2];
+      state.trades = enrichTradesWithPnl(pack[2] || []);
       state.holdings = pack[3];
       renderKPIs(state.metrics);
       renderSnapshot(state.metrics);
@@ -464,6 +678,9 @@
       );
     }
   }
+
+  // expose helpers for debugging
+  window.ASR = { stockLabel: stockLabel, STOCK_NAMES: STOCK_NAMES };
 
   main();
 })();
