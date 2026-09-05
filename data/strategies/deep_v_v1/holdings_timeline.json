@@ -19,6 +19,25 @@
     "n_pos": 0
   },
   {
+    "date": "2023-11-13",
+    "positions": [
+      {
+        "code": "002241",
+        "shares": 10100.0,
+        "avg_cost": 18.62931,
+        "cost_basis": 188156.03,
+        "side_last": "buy",
+        "reason": "deep_v_entry"
+      }
+    ],
+    "n_pos": 1
+  },
+  {
+    "date": "2023-11-15",
+    "positions": [],
+    "n_pos": 0
+  },
+  {
     "date": "2024-03-01",
     "positions": [
       {
@@ -31,9 +50,9 @@
       },
       {
         "code": "600219",
-        "shares": 79600.0,
+        "shares": 79500.0,
         "avg_cost": 2.371185,
-        "cost_basis": 188746.33,
+        "cost_basis": 188509.21,
         "side_last": "buy",
         "reason": "deep_v_entry"
       }
@@ -80,6 +99,71 @@
   },
   {
     "date": "2025-04-28",
+    "positions": [],
+    "n_pos": 0
+  },
+  {
+    "date": "2025-07-11",
+    "positions": [
+      {
+        "code": "601318",
+        "shares": 3500.0,
+        "avg_cost": 54.32715,
+        "cost_basis": 190145.02,
+        "side_last": "buy",
+        "reason": "deep_v_entry"
+      }
+    ],
+    "n_pos": 1
+  },
+  {
+    "date": "2025-07-17",
+    "positions": [],
+    "n_pos": 0
+  },
+  {
+    "date": "2025-07-18",
+    "positions": [
+      {
+        "code": "000768",
+        "shares": 6600.0,
+        "avg_cost": 28.444215,
+        "cost_basis": 187731.82,
+        "side_last": "buy",
+        "reason": "deep_v_entry"
+      }
+    ],
+    "n_pos": 1
+  },
+  {
+    "date": "2025-07-24",
+    "positions": [],
+    "n_pos": 0
+  },
+  {
+    "date": "2025-11-18",
+    "positions": [
+      {
+        "code": "600115",
+        "shares": 35300.0,
+        "avg_cost": 5.38269,
+        "cost_basis": 190008.96,
+        "side_last": "buy",
+        "reason": "deep_v_entry"
+      },
+      {
+        "code": "600346",
+        "shares": 9400.0,
+        "avg_cost": 20.120055,
+        "cost_basis": 189128.52,
+        "side_last": "buy",
+        "reason": "deep_v_entry"
+      }
+    ],
+    "n_pos": 2
+  },
+  {
+    "date": "2025-11-20",
     "positions": [],
     "n_pos": 0
   }

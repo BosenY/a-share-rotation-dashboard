@@ -25,17 +25,17 @@
   {
     "id": "deep_v_v1",
     "name": "深V超短",
-    "cagr": 0.0015610883535690512,
-    "maxdd": -0.011111618364076259,
-    "sharpe": 0.1851656579425647,
-    "total_return": 0.0057391365703001185,
-    "avg_invested": 0.0056131580705500355,
-    "win_rate": 0.4,
-    "turnover": 0.5153870519574708,
-    "trades": 10,
-    "buy_count": 5,
-    "sell_count": 5,
-    "final_nav": 1005739.1365703002,
+    "cagr": -0.0023920325331855397,
+    "maxdd": -0.019304785804544755,
+    "sharpe": -0.2243244878532457,
+    "total_return": -0.008747724422449754,
+    "avg_invested": 0.008577178335365622,
+    "win_rate": 0.2,
+    "turnover": 1.0294562676590537,
+    "trades": 20,
+    "buy_count": 10,
+    "sell_count": 10,
+    "final_nav": 991252.2755775503,
     "n_days": 891,
     "start_date": "2023-01-03",
     "end_date": "2026-09-04",
@@ -48,10 +48,13 @@
       "require_macd": true,
       "hotspot_required": true,
       "hotspot_lookback_days": 3,
-      "hotspot_mode": "live_flow+ths_index_proxy",
+      "hotspot_mode": "hist_concept_proxy+live_flow",
       "hotspot_notes": [
-        "Historical hotspots use THS concept-index daily return ranks as proxy; Eastmoney concept cons/rank APIs are unreliable in this environment.",
-        "Live fund-flow overlay: 12 boards cached."
+        "EM stock_board_concept_hist_em unavailable (502/conn) — historical ranks use THS stock_board_concept_index_ths (hist_concept_proxy).",
+        "EM concept map: 504 boards via push2delay.",
+        "hist_concept_proxy: 890 days; EM-cons days=890; affinity-fill days=890; rank_by=return.",
+        "As-of hotspot *ranks* are THS index daily return/amount proxy (not Eastmoney live snapshot). Constituents prefer EM cons.",
+        "Live fund-flow overlay: 12 boards."
       ]
     }
   }
