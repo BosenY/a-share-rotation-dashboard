@@ -1,0 +1,86 @@
+[
+  {
+    "date": "2023-07-26",
+    "positions": [
+      {
+        "code": "601899",
+        "shares": 16700.0,
+        "avg_cost": 11.315655,
+        "cost_basis": 188971.44,
+        "side_last": "buy",
+        "reason": "deep_v_entry"
+      }
+    ],
+    "n_pos": 1
+  },
+  {
+    "date": "2023-07-28",
+    "positions": [],
+    "n_pos": 0
+  },
+  {
+    "date": "2024-03-01",
+    "positions": [
+      {
+        "code": "000408",
+        "shares": 7600.0,
+        "avg_cost": 24.742365,
+        "cost_basis": 188041.97,
+        "side_last": "buy",
+        "reason": "deep_v_entry"
+      },
+      {
+        "code": "600219",
+        "shares": 79600.0,
+        "avg_cost": 2.371185,
+        "cost_basis": 188746.33,
+        "side_last": "buy",
+        "reason": "deep_v_entry"
+      }
+    ],
+    "n_pos": 2
+  },
+  {
+    "date": "2024-03-13",
+    "positions": [],
+    "n_pos": 0
+  },
+  {
+    "date": "2024-05-17",
+    "positions": [
+      {
+        "code": "601336",
+        "shares": 6900.0,
+        "avg_cost": 27.383685,
+        "cost_basis": 188947.43,
+        "side_last": "buy",
+        "reason": "deep_v_entry"
+      }
+    ],
+    "n_pos": 1
+  },
+  {
+    "date": "2024-05-24",
+    "positions": [],
+    "n_pos": 0
+  },
+  {
+    "date": "2025-04-23",
+    "positions": [
+      {
+        "code": "000538",
+        "shares": 3500.0,
+        "avg_cost": 54.30714,
+        "cost_basis": 190074.99,
+        "side_last": "buy",
+        "reason": "deep_v_entry"
+      }
+    ],
+    "n_pos": 1
+  },
+  {
+    "date": "2025-04-28",
+    "positions": [],
+    "n_pos": 0
+  }
+]

@@ -1,0 +1,58 @@
+[
+  {
+    "id": "rotation_v1",
+    "name": "缩量筑底周度轮动",
+    "cagr": 0.031188522960533316,
+    "maxdd": -0.19407581567460797,
+    "sharpe": 0.29408693707883904,
+    "total_return": 0.11926686629620797,
+    "avg_invested": 0.4731222394608307,
+    "win_rate": 0.4730392156862745,
+    "turnover": 25.58692574705367,
+    "trades": 1906,
+    "buy_count": 989,
+    "sell_count": 917,
+    "final_nav": 1119266.866296208,
+    "n_days": 891,
+    "start_date": "2023-01-03",
+    "end_date": "2026-09-04",
+    "lot_multiples_ok": true,
+    "meta": {
+      "max_holdings": 20,
+      "rebalance": "weekly_friday"
+    }
+  },
+  {
+    "id": "deep_v_v1",
+    "name": "深V超短",
+    "cagr": 0.0015610883535690512,
+    "maxdd": -0.011111618364076259,
+    "sharpe": 0.1851656579425647,
+    "total_return": 0.0057391365703001185,
+    "avg_invested": 0.0056131580705500355,
+    "win_rate": 0.4,
+    "turnover": 0.5153870519574708,
+    "trades": 10,
+    "buy_count": 5,
+    "sell_count": 5,
+    "final_nav": 1005739.1365703002,
+    "n_days": 891,
+    "start_date": "2023-01-03",
+    "end_date": "2026-09-04",
+    "lot_multiples_ok": true,
+    "meta": {
+      "max_positions": 5,
+      "equity_sleeve": 0.95,
+      "skip_gap_pct": 0.01,
+      "require_vol": true,
+      "require_macd": true,
+      "hotspot_required": true,
+      "hotspot_lookback_days": 3,
+      "hotspot_mode": "live_flow+ths_index_proxy",
+      "hotspot_notes": [
+        "Historical hotspots use THS concept-index daily return ranks as proxy; Eastmoney concept cons/rank APIs are unreliable in this environment.",
+        "Live fund-flow overlay: 12 boards cached."
+      ]
+    }
+  }
+]

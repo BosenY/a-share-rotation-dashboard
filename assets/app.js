@@ -20,6 +20,10 @@
     industry_dead: "行业死叉",
     take_profit: "止盈",
     stop_loss: "止损",
+    trailing_stop: "移动止损",
+    deep_v_entry: "深V入场",
+    cost_fail: "未站上成本",
+    below_ma5: "跌破MA5",
   };
 
   const STRATEGY_CARDS = [
@@ -66,6 +70,9 @@
     stockNames: STOCK_NAMES,
     holdingsRange: { preset: "all", start: null, end: null },
     tradesRange: { preset: "all", start: null, end: null },
+    compare: [],
+    strategyId: "default",
+    strategyCache: {},
   };
   const $ = (sel) => document.querySelector(sel);
 
@@ -844,6 +851,161 @@
     bindTimeFilters();
   }
 
+
+  function fmtPctRaw(n, digits) {
+    if (digits == null) digits = 2;
+    if (n == null || Number.isNaN(n)) return "—";
+    return (Number(n) * 100).toFixed(digits) + "%";
+  }
+
+  function renderCompareTable(rows) {
+    const tbody = $("#compare-tbody");
+    const note = $("#compare-note");
+    if (!tbody) return;
+    if (!rows || !rows.length) {
+      tbody.innerHTML =
+        '<tr><td colspan="7" class="muted">暂无对比数据 · 运行 python -m compare.run_compare</td></tr>';
+      if (note) note.textContent = "运行 compare.run_compare 后显示";
+      return;
+    }
+    if (note) note.textContent = rows.length + " 个策略";
+    tbody.innerHTML = rows
+      .map(function (r) {
+        const active = state.strategyId === r.id ? " is-active-row" : "";
+        return (
+          '<tr class="compare-row' +
+          active +
+          '" data-sid="' +
+          escapeHtml(r.id) +
+          '"><td><strong>' +
+          escapeHtml(r.name || r.id) +
+          '</strong><div class="tiny mono">' +
+          escapeHtml(r.id) +
+          "</div></td>" +
+          '<td class="right mono">' +
+          fmtPctRaw(r.cagr, 2) +
+          "</td>" +
+          '<td class="right mono">' +
+          fmtPctRaw(r.maxdd, 2) +
+          "</td>" +
+          '<td class="right mono">' +
+          (r.sharpe == null ? "—" : Number(r.sharpe).toFixed(3)) +
+          "</td>" +
+          '<td class="right mono">' +
+          fmtPctRaw(r.total_return, 2) +
+          "</td>" +
+          '<td class="right mono">' +
+          fmtPctRaw(r.avg_invested, 1) +
+          "</td>" +
+          '<td class="right mono">' +
+          String(r.trades != null ? r.trades : "—") +
+          "</td></tr>"
+        );
+      })
+      .join("");
+    tbody.querySelectorAll("tr.compare-row").forEach(function (tr) {
+      tr.style.cursor = "pointer";
+      tr.addEventListener("click", function () {
+        const sid = tr.getAttribute("data-sid");
+        const sel = $("#strategy-select");
+        if (sel && sid) {
+          sel.value = sid;
+          switchStrategy(sid);
+        }
+      });
+    });
+  }
+
+  function populateStrategySelect(compareRows) {
+    const sel = $("#strategy-select");
+    if (!sel) return;
+    const opts = [{ id: "default", name: "默认（轮动缓存）" }];
+    (compareRows || []).forEach(function (r) {
+      opts.push({ id: r.id, name: (r.name || r.id) + " · " + r.id });
+    });
+    sel.innerHTML = opts
+      .map(function (o) {
+        return (
+          '<option value="' +
+          escapeHtml(o.id) +
+          '">' +
+          escapeHtml(o.name) +
+          "</option>"
+        );
+      })
+      .join("");
+    sel.value = state.strategyId || "default";
+    sel.addEventListener("change", function () {
+      switchStrategy(sel.value);
+    });
+  }
+
+  function applyStrategyPack(pack, sid) {
+    state.strategyId = sid || "default";
+    state.metrics = pack.metrics;
+    state.equity = pack.equity || [];
+    state.trades = enrichTradesWithPnl(pack.trades || []);
+    state.holdings = pack.holdings || [];
+    // reset reason filter options
+    const sel = $("#trade-reason");
+    if (sel) {
+      const keep = sel.querySelector('option[value=""]');
+      sel.innerHTML = "";
+      if (keep) sel.appendChild(keep);
+      else {
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "全部原因";
+        sel.appendChild(opt);
+      }
+      populateReasonFilter();
+    }
+    renderKPIs(state.metrics);
+    renderSnapshot(state.metrics);
+    renderHoldings();
+    renderTrades();
+    renderCompareTable(state.compare);
+    drawEquityChart(state.equity);
+    const brand = document.querySelector(".brand h1");
+    if (brand && state.metrics && state.metrics.title) {
+      brand.textContent = state.metrics.title;
+    }
+  }
+
+  async function switchStrategy(sid) {
+    if (!sid || sid === "default") {
+      if (state.strategyCache.default) {
+        applyStrategyPack(state.strategyCache.default, "default");
+      }
+      return;
+    }
+    if (state.strategyCache[sid]) {
+      applyStrategyPack(state.strategyCache[sid], sid);
+      return;
+    }
+    try {
+      const base = "data/strategies/" + sid + "/";
+      const packArr = await Promise.all([
+        loadJSON(base + "metrics.json"),
+        loadJSON(base + "equity.json"),
+        loadJSON(base + "trades.json"),
+        loadJSON(base + "holdings_timeline.json"),
+      ]);
+      const pack = {
+        metrics: packArr[0],
+        equity: packArr[1],
+        trades: packArr[2],
+        holdings: packArr[3],
+      };
+      state.strategyCache[sid] = pack;
+      applyStrategyPack(pack, sid);
+    } catch (err) {
+      console.warn("strategy load failed", sid, err);
+      alert("无法加载策略数据：" + sid + "\\n" + err.message);
+    }
+  }
+
+
   async function main() {
     try {
       let pack;
@@ -872,8 +1034,27 @@
       state.equity = pack[1];
       state.trades = enrichTradesWithPnl(pack[2] || []);
       state.holdings = pack[3];
+      state.strategyCache.default = {
+        metrics: state.metrics,
+        equity: state.equity,
+        trades: pack[2] || [],
+        holdings: state.holdings,
+      };
+      let compareRows = [];
+      try {
+        if (window.ASR_DATA && window.ASR_DATA.compare) {
+          compareRows = window.ASR_DATA.compare;
+        } else {
+          compareRows = await loadJSON("data/compare_metrics.json");
+        }
+      } catch (_) {
+        compareRows = [];
+      }
+      state.compare = compareRows || [];
+      populateStrategySelect(state.compare);
       renderKPIs(state.metrics);
       renderSnapshot(state.metrics);
+      renderCompareTable(state.compare);
       populateReasonFilter();
       renderHoldings();
       renderTrades();
@@ -882,6 +1063,7 @@
       setupNav();
       // Chart after tab is shown so canvas has width
       drawEquityChart(state.equity);
+      // Prefer deep_v in selector note only; keep default view as rotation cache
     } catch (err) {
       console.error(err);
       document.body.insertAdjacentHTML(

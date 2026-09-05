@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="缩量筑底轮动策略 · 持仓时间线与操作记录回测看板" />
-  <title>缩量筑底轮动 · 持仓与操作</title>
+  <title>A股多策略回测实验室 · 持仓与操作</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;650&family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -16,9 +16,16 @@
       <div class="brand">
         <div class="brand-mark">轮</div>
         <div>
-          <h1>缩量筑底轮动 · 持仓与操作</h1>
-          <p>A-Share Rotation · Backtest Dashboard</p>
+          <h1>A股多策略回测实验室</h1>
+          <p>Multi-strategy lab · Rotation &amp; 深V超短</p>
         </div>
+      </div>
+      <div class="header-tools">
+        <label class="strat-switch" for="strategy-select">策略
+          <select id="strategy-select" class="select strat-select" title="切换持仓/成交数据源">
+            <option value="default">默认（轮动）</option>
+          </select>
+        </label>
       </div>
       <nav class="nav" id="nav" role="tablist">
         <a href="#overview" class="nav-link active" role="tab" data-tab="overview" aria-selected="true">总览</a>
@@ -40,6 +47,30 @@
         <div id="period-badge" class="badge-pill"></div>
       </div>
       <div id="kpi-grid" class="kpi-grid"></div>
+      <div class="card card-pad compare-card" id="compare-card">
+        <div class="chart-head">
+          <h3>策略对比 <span>compare_metrics</span></h3>
+          <span class="muted" id="compare-note">运行 compare.run_compare 后显示</span>
+        </div>
+        <div class="table-scroll">
+          <table class="compare-table">
+            <thead>
+              <tr>
+                <th>策略</th>
+                <th class="right">CAGR</th>
+                <th class="right">最大回撤</th>
+                <th class="right">Sharpe</th>
+                <th class="right">累计收益</th>
+                <th class="right">平均仓位</th>
+                <th class="right">交易笔数</th>
+              </tr>
+            </thead>
+            <tbody id="compare-tbody">
+              <tr><td colspan="7" class="muted">暂无对比数据</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
       <div class="overview-grid">
         <div class="card card-pad">
           <div class="chart-head">

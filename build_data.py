@@ -538,12 +538,21 @@ def main() -> None:
     write_json(OUT / "metrics.json", metrics)
     write_json(OUT / "stock_names.json", STOCK_NAMES)
 
+    compare = []
+    compare_path = OUT / "compare_metrics.json"
+    if compare_path.exists():
+        try:
+            compare = json.loads(compare_path.read_text(encoding="utf-8"))
+        except Exception:
+            compare = []
+
     bundle = {
         "metrics": metrics,
         "equity": equity_json,
         "trades": trades_json,
         "holdings": holdings,
         "stock_names": STOCK_NAMES,
+        "compare": compare,
     }
     assets = ROOT / "assets"
     assets.mkdir(parents=True, exist_ok=True)
